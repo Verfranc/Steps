@@ -1,0 +1,37 @@
+
+CREATE FUNCTION dbo.GenerateTrigramTokens (@SearchText nvarchar(1024))
+RETURNS TABLE WITH SCHEMABINDING AS RETURN
+WITH
+Base(position) AS
+(
+  SELECT position
+  FROM (VALUES
+        (1),(1),(1),(1),(1),(1),(1),(1),(1),(1),
+        (1),(1),(1),(1),(1),(1),(1),(1),(1),(1),
+        (1),(1),(1),(1),(1),(1),(1),(1),(1),(1),
+        (1),(1)
+       ) v(position)
+),
+TallyTable(position) AS  
+(
+  SELECT TOP (CASE WHEN LEN(@SearchText) > 2 THEN LEN(@SearchText) - 2 ELSE 0 END)    
+  ROW_NUMBER() OVER (ORDER BY (SELECT NULL))
+  FROM Base firstDegree 
+  CROSS JOIN Base secondDegree
+)
+SELECT
+SUBSTRING(@SearchText, position, 3) AS Token
+FROM TallyTable
+
+/* test
+
+SELECT * from dbo.GenerateTrigramTokens2('li');
+SELECT * from dbo.GenerateTrigramTokens2('lie');
+SELECT * from dbo.GenerateTrigramTokens2('lied');
+SELECT * from dbo.GenerateTrigramTokens2('li lo');
+SELECT * from dbo.GenerateTrigramTokens2('ÑÛ');
+SELECT * from dbo.GenerateTrigramTokens2('ÑÛß');
+SELECT * from dbo.GenerateTrigramTokens2('ÑÛßr');
+SELECT * from dbo.GenerateTrigramTokens2('ÑÛ ßr');
+
+*/
